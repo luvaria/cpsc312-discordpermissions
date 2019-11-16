@@ -20,7 +20,7 @@ channels_URL(GuildID, ChannelsURL) :-
 	guild_URL(GuildID, GuildURL),
 	string_concat(GuildURL, "/channels", ChannelsURL).
 
-% gets data as dict given URL
+% gets data as dict given URL, tagging by id
 get_data(URL, Dict) :-
 	bot_token(Token),
 	catch(http_open(URL, Stream, [request_header("Authorization"=Token)]),
@@ -29,10 +29,12 @@ get_data(URL, Dict) :-
 		  fail)),
 	json_read_dict(Stream, Dict, [tag(id)]).
 
+% gets roles as dict given guild ID
 get_roles(GuildID, Dict) :-
 	roles_URL(GuildID, URL),
 	get_data(URL, Dict).
 
+% gets channels as dict given guild ID
 get_channels(GuildID, Dict) :-
 	channels_URL(GuildID, URL),
 	get_data(URL, Dict).
