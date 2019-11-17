@@ -9,10 +9,10 @@ flag("NONE", 0x00000000).
 
 % computes a member's base permissions integer
 % given member and guild
-base_permissions(Member, Guild, Permissions) :-
+base_permissions(Member, Guild, Roles, Permissions) :-
 	guild_owner(Member, Guild, P1),
 	flag("NONE", P2),
-	guild_roles(Member.roles, P2, P3),
+	guild_roles(Roles, P2, P3),
 	guild_admin(P3, P4),
 	Permissions is P1 \/ P4.
 
@@ -20,11 +20,11 @@ base_permissions(Member, Guild, Permissions) :-
 
 % member is guild owner
 guild_owner(Member, Guild, Permissions) :-
-	Member.id =:= Guild.owner_id,
+	Member.user.id = Guild.owner_id,
 	flag("ALL", Permissions).
 % member is not guild owner
 guild_owner(Member, Guild, Permissions) :-
-	Member.id =\= Guild.owner_id,
+	Member.user.id \= Guild.owner_id,
 	flag("NONE", Permissions).
 
 % given a list of roles, produces combined permissions integer
@@ -64,7 +64,7 @@ overwrite_permissions(Member, Channel, Base, Permissions) :-
 % given a channel, applies @everyone overwrites
 channel_everyone(Channel, Base, Permissions) :-
 	member(Everyone, Channel.permission_overwrites),
-	Everyone.id =:= Channel.guild_id, % can this throw an error? @everyone overwrite may not exist
+	Everyone.id = Channel.guild_id, % can this throw an error? @everyone overwrite may not exist
 	Deny is Base /\ \Everyone.deny,
 	Permissions is Deny \/ Everyone.allow.
 
@@ -78,12 +78,12 @@ channel_roles([H|T], GID, P, R) :-
 	channel_roles(T, GID, P, R).
 % ignore @everyone overwrites
 channel_roles([H|T], GID, P, R) :-
-	H.id =:= GID,
+	H.id = GID,
 	channel_roles(T, GID, P, R).
 % role overwrites
 channel_roles([H|T], GID, P, R) :-
 	H.type \= "member",
-	H.id =\= GID,
+	H.id \= GID,
 	D is P /\ \H.deny,
 	P1 is D \/ H.allow,
 	channel_roles(T, GID, P1, R).
@@ -94,7 +94,7 @@ channel_roles([H|T], GID, P, R) :-
 channel_member(Overwrites, Member, PermsIn, PermsOut) :-
 	member(MemberOverwrite, Overwrites),
 	MemberOverwrite.type = "member",
-	MemberOverwrite.id =:= Member.id,
+	MemberOverwrite.id = Member.user.id,
 	Deny is PermsIn /\ \MemberOverwrite.deny,
 	PermsOut is Deny \/ MemberOverwrite.allow.
 
@@ -103,6 +103,7 @@ channel_member(Overwrites, Member, PermsIn, PermsOut) :-
 % produces the member's permissions considering overwrites
 	% Member, Guild, Channel as dicts
 	% Permissions as integer 0x########
-permissions(Member, Guild, Channel, Permissions) :-
-	base_permissions(Member, Guild, Base),
+% TODO: alternatively, get Guild and Roles based on Channel (from guild_id) rather than passing args
+permissions(Member, Guild, Channel, Roles, Permissions) :-
+	base_permissions(Member, Guild, Roles, Base),
 	overwrite_permissions(Member, Channel, Base, Permissions).
