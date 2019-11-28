@@ -1,6 +1,7 @@
 % based on https://discordapp.com/developers/docs/topics/permissions#permission-overwrites
 
 :- consult(flags).
+:- consult(data).
 
 
 % all permissions granted
