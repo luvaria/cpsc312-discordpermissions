@@ -4,17 +4,11 @@
 :- consult(data).
 
 
-% all permissions granted
-flag("ALL", 0x7fffffff).
-% no permissions granted
-flag("NONE", 0x00000000).
-
-
 % computes a member's base permissions integer
 % given member and guild
 base_permissions(Member, Guild, Permissions) :-
 	guild_owner(Member, Guild, P1),
-	flag("NONE", P2),
+	flag("NONE", P2, _),
 	Roles = Guild.roles,
 	guild_roles(Member, Guild, Roles, P2, P3),
 	guild_admin(P3, P4),
@@ -25,11 +19,11 @@ base_permissions(Member, Guild, Permissions) :-
 % member is guild owner
 guild_owner(Member, Guild, Permissions) :-
 	Member.user.id = Guild.owner_id,
-	flag("ALL", Permissions).
+	flag("ALL", Permissions, _).
 % member is not guild owner
 guild_owner(Member, Guild, Permissions) :-
 	Member.user.id \= Guild.owner_id,
-	flag("NONE", Permissions).
+	flag("NONE", Permissions, _).
 
 % given member and list of roles in guild,
 % produces combined permissions integer
@@ -56,7 +50,7 @@ guild_roles(M, G, [H|T], P, R) :-
 % guild_admin(PermsIn, PermsOut).
 guild_admin(P, R) :-
 	has_permission(P, "ADMINISTRATOR"),
-	flag("ALL", R).
+	flag("ALL", R, _).
 % member is not administrator
 guild_admin(P, P) :-
 	\+ has_permission(P, "ADMINISTRATOR").
@@ -68,14 +62,14 @@ guild_admin(P, P) :-
 % base is administrator
 overwrite_permissions(_, _, Base, Permissions) :-
 	has_permission(Base, "ADMINISTRATOR"),
-	flag("ALL", Permissions).
+	flag("ALL", Permissions, _).
 % base is not administrator
 overwrite_permissions(Member, Channel, Base, Permissions) :-
 	\+ has_permission(Base, "ADMINISTRATOR"),
 	channel_everyone(Channel.permission_overwrites, Channel.guild_id, Base, P1),
-	flag("NONE", N),
+	flag("NONE", N, _),
 	channel_roles(Channel.permission_overwrites, Channel.guild_id, N, N, Deny, Allow),
-	P2 is P1 /\ \Deny \/ Allow, 
+	P2 is P1 /\ \Deny \/ Allow,
 	channel_member(Channel.permission_overwrites, Member, P2, Permissions).
 
 % helpers for overwrite_permissions:
@@ -142,7 +136,7 @@ guild_permissions(UserID, GuildID, Permissions) :-
 	get_member(GuildID, UserID, Member),
 	get_guild(GuildID, Guild),
 	base_permissions(Member, Guild, Permissions).
-	
+
 
 % given the IDs of a member of a guild and a channel in the guild,
 % produces the member's permissions considering overwrites

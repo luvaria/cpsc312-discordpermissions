@@ -38,6 +38,11 @@ flag("MANAGE_ROLES", 0x10000000, ["T", "V"]).
 flag("MANAGE_WEBHOOKS", 0x20000000, ["T", "V"]).
 flag("MANAGE_EMOJIS", 0x40000000, []).
 
+% all permissions granted
+flag("ALL", 0x7fffffff, []).
+% no permissions granted
+flag("NONE", 0x00000000, []).
+
 % true when given permissions integer matches permission flag
 % try: has_permission(0x00000003, "CREATE_INSTANT_INVITE").
 has_permission(Integer, Permission) :-
